@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI vs Human Text Classifier — Research Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020810;
+    --grid: #0a1628;
+    --cyan: #00f5ff;
+    --green: #00ff88;
+    --orange: #ff6b35;
+    --purple: #9b59ff;
+    --dim: #1a2a3a;
+    --text: #c8e0f0;
+    --text-dim: #4a6a8a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridMove 20s linear infinite;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(0,100,255,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(0,245,255,0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(155,89,255,0.05) 0%, transparent 50%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  @keyframes gridMove {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(40px); }
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeDown 0.8s ease both;
+  }
+
+  .header-badge {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--cyan);
+    border: 1px solid rgba(0,245,255,0.3);
+    padding: 4px 16px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header-badge::before {
+    content: '';
+    position: absolute;
+    left: -100%;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0,245,255,0.2), transparent);
+    animation: shimmer 3s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 200%; }
+  }
+
+  h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(22px, 4vw, 42px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, #fff 0%, var(--cyan) 50%, var(--purple) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+    animation: fadeUp 0.8s 0.2s ease both;
+  }
+
+  .stat-chip {
+    background: rgba(10,22,40,0.8);
+    border: 1px solid rgba(0,245,255,0.15);
+    padding: 14px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  }
+
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--cyan);
+  }
+
+  /* MODEL CARDS */
+  .models-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  .model-card {
+    background: rgba(10,22,40,0.9);
+    border: 1px solid rgba(0,245,255,0.12);
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s, border-color 0.3s;
+    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+  }
+
+  .model-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(0,245,255,0.4);
+  }
+
+  .model-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .card-lr::before { background: linear-gradient(90deg, var(--orange), transparent); }
+  .card-svm::before { background: linear-gradient(90deg, var(--purple), transparent); }
+  .card-bert::before { background: linear-gradient(90deg, var(--cyan), transparent); }
+
+  .card-number {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+  }
+
+  .model-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .card-lr .model-name { color: var(--orange); }
+  .card-svm .model-name { color: var(--purple); }
+  .card-bert .model-name { color: var(--cyan); }
+
+  .model-type {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+  }
+
+  /* Accuracy bar */
+  .acc-section { margin-bottom: 18px; }
+
+  .acc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+
+  .acc-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+
+  .acc-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 26px;
+    font-weight: 900;
+  }
+
+  .card-lr .acc-value { color: var(--orange); }
+  .card-svm .acc-value { color: var(--purple); }
+  .card-bert .acc-value { color: var(--cyan); }
+
+  .bar-track {
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 0;
+    animation: barGrow 1.5s cubic-bezier(0.23, 1, 0.32, 1) both;
+    position: relative;
+  }
+
+  .bar-fill::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 20px;
+    filter: blur(4px);
+    opacity: 0.8;
+  }
+
+  .card-lr .bar-fill { background: var(--orange); box-shadow: 0 0 12px var(--orange); }
+  .card-lr .bar-fill::after { background: var(--orange); }
+  .card-svm .bar-fill { background: var(--purple); box-shadow: 0 0 12px var(--purple); }
+  .card-svm .bar-fill::after { background: var(--purple); }
+  .card-bert .bar-fill { background: var(--cyan); box-shadow: 0 0 12px var(--cyan); }
+  .card-bert .bar-fill::after { background: var(--cyan); }
+
+  @keyframes barGrow {
+    from { width: 0; }
+  }
+
+  .card-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    border-radius: 0;
+    text-transform: uppercase;
+    border: 1px solid;
+  }
+
+  .card-lr .tag { color: var(--orange); border-color: rgba(255,107,53,0.3); background: rgba(255,107,53,0.08); }
+  .card-svm .tag { color: var(--purple); border-color: rgba(155,89,255,0.3); background: rgba(155,89,255,0.08); }
+  .card-bert .tag { color: var(--cyan); border-color: rgba(0,245,255,0.3); background: rgba(0,245,255,0.08); }
+
+  /* FINAL ACCURACY HERO */
+  .final-hero {
+    border: 1px solid rgba(0,255,136,0.3);
+    background: rgba(0,20,15,0.9);
+    padding: 40px 48px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 32px;
+    clip-path: polygon(0 0, calc(100% - 30px) 0, 100% 30px, 100% 100%, 30px 100%, 0 calc(100% - 30px));
+    animation: fadeUp 0.8s 0.5s ease both;
+  }
+
+  .final-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0,255,136,0.06) 0%, transparent 70%);
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  .final-hero::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--green), transparent);
+    animation: scanLine 4s linear infinite;
+  }
+
+  @keyframes scanLine {
+    0% { opacity: 0.3; }
+    50% { opacity: 1; }
+    100% { opacity: 0.3; }
+  }
+
+  .final-layout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+
+  .final-left {}
+
+  .final-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--green);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .final-badge::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: var(--green);
+  }
+
+  .final-title {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(14px, 2vw, 20px);
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .final-desc {
+    font-size: 14px;
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 1px;
+    max-width: 400px;
+    line-height: 1.6;
+  }
+
+  .final-right {
+    text-align: right;
+  }
+
+  .final-number {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(64px, 10vw, 110px);
+    font-weight: 900;
+    color: var(--green);
+    line-height: 1;
+    text-shadow: 0 0 40px rgba(0,255,136,0.5), 0 0 80px rgba(0,255,136,0.2);
+    letter-spacing: -2px;
+    animation: countUp 2s ease both;
+  }
+
+  @keyframes countUp {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .final-sublabel {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--green);
+    letter-spacing: 4px;
+    opacity: 0.7;
+    text-align: right;
+  }
+
+  /* COMPARISON BAR */
+  .comparison-section {
+    background: rgba(10,22,40,0.9);
+    border: 1px solid rgba(0,245,255,0.12);
+    padding: 28px;
+    animation: fadeUp 0.8s 0.7s ease both;
+    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  }
+
+  .section-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(0,245,255,0.2), transparent);
+  }
+
+  .compare-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .compare-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    width: 130px;
+    flex-shrink: 0;
+    color: var(--text);
+  }
+
+  .compare-track {
+    flex: 1;
+    height: 10px;
+    background: rgba(255,255,255,0.04);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .compare-fill {
+    height: 100%;
+    animation: barGrow 1.8s cubic-bezier(0.23, 1, 0.32, 1) both;
+  }
+
+  .compare-pct {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    width: 50px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .row-lr .compare-fill { background: linear-gradient(90deg, var(--orange), rgba(255,107,53,0.6)); box-shadow: 0 0 8px var(--orange); }
+  .row-lr .compare-pct { color: var(--orange); }
+  .row-svm .compare-fill { background: linear-gradient(90deg, var(--purple), rgba(155,89,255,0.6)); box-shadow: 0 0 8px var(--purple); }
+  .row-svm .compare-pct { color: var(--purple); }
+  .row-bert .compare-fill { background: linear-gradient(90deg, var(--cyan), rgba(0,245,255,0.6)); box-shadow: 0 0 8px var(--cyan); }
+  .row-bert .compare-pct { color: var(--cyan); }
+  .row-final .compare-fill { background: linear-gradient(90deg, var(--green), rgba(0,255,136,0.6)); box-shadow: 0 0 8px var(--green); }
+  .row-final .compare-pct { color: var(--green); }
+  .row-final .compare-label { color: var(--green); font-weight: 700; }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 32px;
+    text-align: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    opacity: 0.5;
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .model-card:nth-child(1) { animation: fadeUp 0.6s 0.3s ease both; }
+  .model-card:nth-child(2) { animation: fadeUp 0.6s 0.45s ease both; }
+  .model-card:nth-child(3) { animation: fadeUp 0.6s 0.6s ease both; }
+
+  /* Floating particles */
+  .particles {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: var(--cyan);
+    border-radius: 50%;
+    opacity: 0;
+    animation: float linear infinite;
+  }
+
+  @keyframes float {
+    0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.3; }
+    100% { transform: translateY(-20px) translateX(30px); opacity: 0; }
+  }
+
+  @media (max-width: 600px) {
+    .stats-row { grid-template-columns: 1fr; }
+    .final-layout { flex-direction: column; text-align: center; }
+    .final-right { text-align: center; }
+    .final-sublabel { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-badge">// CLASSIFICATION RESEARCH</div>
+    <h1>AI vs Human Text Detector</h1>
+    <p class="subtitle">BINARY CLASSIFICATION · DATASET: 105,000 ROWS · LABEL: HUMAN=1 / AI=0</p>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-chip">
+      <span class="stat-label">// Total Samples</span>
+      <span class="stat-value">105K</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-label">// Task Type</span>
+      <span class="stat-value" style="font-size:15px; color: var(--purple);">Binary CLF</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-label">// Models Tested</span>
+      <span class="stat-value" style="color: var(--green);">04</span>
+    </div>
+  </div>
+
+  <!-- MODEL CARDS -->
+  <div class="models-grid">
+
+    <!-- LOGISTIC REGRESSION -->
+    <div class="model-card card-lr">
+      <div class="card-number">// MODEL_01</div>
+      <div class="model-name">LOGISTIC REGRESSION</div>
+      <div class="model-type">Traditional ML · Linear Classifier</div>
+      <div class="acc-section">
+        <div class="acc-header">
+          <span class="acc-label">ACCURACY</span>
+          <span class="acc-value">89%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 89%"></div>
+        </div>
+      </div>
+      <div class="card-tags">
+        <span class="tag">TF-IDF Features</span>
+        <span class="tag">Fast Train</span>
+        <span class="tag">Baseline</span>
+      </div>
+    </div>
+
+    <!-- LINEAR SVM -->
+    <div class="model-card card-svm">
+      <div class="card-number">// MODEL_02</div>
+      <div class="model-name">LINEAR SVM</div>
+      <div class="model-type">Support Vector Machine · Kernel: Linear</div>
+      <div class="acc-section">
+        <div class="acc-header">
+          <span class="acc-label">ACCURACY</span>
+          <span class="acc-value">91%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 91%"></div>
+        </div>
+      </div>
+      <div class="card-tags">
+        <span class="tag">Max-Margin</span>
+        <span class="tag">Regularized</span>
+        <span class="tag">+2% Gain</span>
+      </div>
+    </div>
+
+    <!-- DISTILBERT -->
+    <div class="model-card card-bert">
+      <div class="card-number">// MODEL_03</div>
+      <div class="model-name">DistilBERT</div>
+      <div class="model-type">Transformer · 66M Parameters · Fine-tuned</div>
+      <div class="acc-section">
+        <div class="acc-header">
+          <span class="acc-label">ACCURACY</span>
+          <span class="acc-value">93%</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 93%"></div>
+        </div>
+      </div>
+      <div class="card-tags">
+        <span class="tag">Contextual Embeddings</span>
+        <span class="tag">Fine-tuned</span>
+        <span class="tag">+4% Gain</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FINAL ACCURACY HERO -->
+  <div class="final-hero">
+    <div class="final-layout">
+      <div class="final-left">
+        <div class="final-badge">BEST MODEL — FINAL RESULT</div>
+        <div class="final-title">DistilBERT TRANSFORMER PIPELINE</div>
+        <div class="final-desc">
+          After progressing from classical ML to transformer-based deep learning on the full 105K dataset — DistilBERT achieved peak classification performance on AI-generated vs human-written text detection.
+        </div>
+      </div>
+      <div class="final-right">
+        <div class="final-number">93%</div>
+        <div class="final-sublabel">FINAL ACCURACY</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARISON CHART -->
+  <div class="comparison-section">
+    <div class="section-title">Model Accuracy Progression</div>
+
+    <div class="compare-row row-lr">
+      <span class="compare-label">Logistic Reg.</span>
+      <div class="compare-track">
+        <div class="compare-fill" style="width: 89%"></div>
+      </div>
+      <span class="compare-pct">89%</span>
+    </div>
+
+    <div class="compare-row row-svm">
+      <span class="compare-label">Linear SVM</span>
+      <div class="compare-track">
+        <div class="compare-fill" style="width: 91%"></div>
+      </div>
+      <span class="compare-pct">91%</span>
+    </div>
+
+    <div class="compare-row row-bert">
+      <span class="compare-label">DistilBERT</span>
+      <div class="compare-track">
+        <div class="compare-fill" style="width: 93%"></div>
+      </div>
+      <span class="compare-pct">93%</span>
+    </div>
+
+    <div class="compare-row row-final">
+      <span class="compare-label">▶ FINAL MODEL</span>
+      <div class="compare-track">
+        <div class="compare-fill" style="width: 93%"></div>
+      </div>
+      <span class="compare-pct">93%</span>
+    </div>
+  </div>
+
+  <div class="footer">
+    JBIET · B.TECH · AI/ML PROJECT · BINARY TEXT CLASSIFICATION · 2024–25
+  </div>
+
+</div>
+
+<script>
+  // Generate floating particles
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (8 + Math.random() * 15) + 's';
+    p.style.animationDelay = (Math.random() * 15) + 's';
+    p.style.width = p.style.height = (Math.random() > 0.7 ? '3px' : '2px');
+    if (Math.random() > 0.7) p.style.background = '#9b59ff';
+    if (Math.random() > 0.85) p.style.background = '#00ff88';
+    container.appendChild(p);
+  }
+
+  // Animate the 98% counter
+  const numEl = document.querySelector('.final-number');
+  let start = 80, end = 93, dur = 2000;
+  let startTime = null;
+  function animateCount(ts) {
+    if (!startTime) startTime = ts;
+    const progress = Math.min((ts - startTime) / dur, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    numEl.textContent = Math.floor(start + (end - start) * ease) + '%';
+    if (progress < 1) requestAnimationFrame(animateCount);
+  }
+  setTimeout(() => requestAnimationFrame(animateCount), 500);
+</script>
+</body>
+</html>
