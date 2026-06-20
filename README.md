@@ -16,11 +16,11 @@ With the rise of AI-generated content, distinguishing human writing from AI outp
 
 ## 👥 Team Members
 
-| Name | Role |
-|------|------|
-| V. Sree Kirthana | ML Engineer |
-| Sohail Azain | Data Scientist |
-| Sakshi Yadav | NLP Researcher |
+| Name |
+|------|
+| V. Sree Kirthana |
+| Sohail Azain | 
+| Sakshi Yadav |
 
 ---
 
@@ -197,9 +197,11 @@ The trained model can be applied to:
 
 ## 📜 License
 
-© 2025 V. Sree Kirthana. All rights reserved.  
+© 2026 V. Sree Kirthana. All rights reserved.  
 This project was developed as part of a hackathon submission at JBIET.  
 Unauthorized reproduction or distribution is not permitted without explicit consent from the author.
+
+---
 
 ## 📬 Connect & Share Feedback
 `
