@@ -87,6 +87,12 @@ Raw Text (105K rows)
   (Accuracy, F1, P, R)           (Accuracy, F1, P, R)
 ```
 
+<img width="1911" height="953" alt="Screenshot (194)" src="https://github.com/user-attachments/assets/998fa4f5-94d3-4711-a215-4a1171c2d09a" /> 
+
+<img width="1913" height="958" alt="Screenshot (193)" src="https://github.com/user-attachments/assets/3f601e5d-6fe4-460e-92be-596be351ffd7" />
+
+
+
 ---
 
 ## 📊 Results
